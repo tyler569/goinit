@@ -4,44 +4,38 @@ package main
 import (
     "io/ioutil"
     "fmt"
-    "log"
     "os"
     "os/exec"
     "strconv"
     "syscall"
 )
 
+func errorExit(context string, err error) {
+    fmt.Println(context, ":", err)
+    for {}
+}
+
 func remountRoot() {
     fmt.Println("Remounting '/' read-write")
     err := syscall.Mount("/dev/sda", "/", "", syscall.MS_REMOUNT, "")
     if err != nil {
-        fmt.Println("error:", err)
-        for {}
+        errorExit("mount root", err)
     }
 }
 
 func mountProc() {
     fmt.Println("Mouting /proc")
-    /*
-    err := os.Mkdir("/proc", 0777)
-    if err != nil {
-        fmt.Println("error:", err)
-        for {}
-    }
-    */
-    var err error
 
-    err = syscall.Mount("", "/proc", "proc", 0, "")
+    err := syscall.Mount("", "/proc", "proc", 0, "")
     if err != nil {
-        fmt.Println("error:", err)
-        for {}
+        errorExit("mount proc", err)
     }
 }
 
 func listProc() {
     info, err := ioutil.ReadDir("/proc")
     if err != nil {
-        log.Fatal(err)
+        errorExit("list proc", err)
     }
     for i, file := range info {
         name := file.Name()
@@ -60,37 +54,30 @@ func listProc() {
     }
 }
 
+func printSelf() {
+    buf := make([]byte, 32)
+    file, err := os.Open("/proc/self/comm")
+    if err != nil {
+        errorExit("open comm", err)
+    }
+    file.Read(buf)
+    fmt.Println("self:", string(buf))
+}
+
+func serialFile() *os.File {
+    serial, err := os.Open("/dev/ttyS0")
+    if err != nil {
+        errorExit("open serial", err)
+    }
+    return serial;
+}
+
 func main() {
     fmt.Println("Hello World")
     remountRoot()
     mountProc()
 
-    // listProc()
-
-    /*
-    info, err = ioutil.ReadDir("/dev")
-    if err != nil {
-        log.Fatal(err)
-    }
-    for i, file := range info {
-        fmt.Println(i, file.Name())
-    }
-    */
-
-    buf := make([]byte, 32)
-    file, err := os.Open("/proc/self/comm")
-    if err != nil {
-        fmt.Println("error:", err)
-        for {}
-    }
-    file.Read(buf)
-    fmt.Println("self:", string(buf))
-
-    serial, err := os.Open("/dev/ttyS0")
-    if err != nil {
-        fmt.Println("error:", err)
-        for {}
-    }
+    serial := serialFile()
 
     sub := exec.Command("/sbin/sub")
     sub.Stdin = serial
