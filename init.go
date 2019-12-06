@@ -45,6 +45,16 @@ func listDir(dir string) error {
 	return nil
 }
 
+func catFile(filename string) error {
+	bytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(string(bytes))
+	return nil
+}
+
 func printSelf() {
     buf := make([]byte, 32)
     file, err := os.Open("/proc/self/comm")
@@ -88,6 +98,11 @@ func main() {
 			sub.Run()
 		case len(str) > 3 && str[:3] == "ls ":
 			err := listDir(str[3:])
+			if err != nil {
+				fmt.Println(err)
+			}
+		case len(str) > 4 && str[:4] == "cat ":
+			err := catFile(str[4:])
 			if err != nil {
 				fmt.Println(err)
 			}
