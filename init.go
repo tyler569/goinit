@@ -34,14 +34,15 @@ func mountProc() {
     }
 }
 
-func listDir(dir string) {
+func listDir(dir string) error {
     info, err := ioutil.ReadDir(dir)
     if err != nil {
-        errorExit("list " + dir, err)
+		return err
     }
     for _, file := range info {
         fmt.Println(file.Name())
     }
+	return nil
 }
 
 func printSelf() {
@@ -82,9 +83,14 @@ func main() {
 			fmt.Println("Test succesful!")
 		case str == "sub":
 			sub := exec.Command("/sbin/sub")
+			sub.Stdin = os.Stdin
+			sub.Stdout = os.Stdout
 			sub.Run()
 		case len(str) > 3 && str[:3] == "ls ":
-			listDir(str[3:])
+			err := listDir(str[3:])
+			if err != nil {
+				fmt.Println(err)
+			}
 		case str == "":
 			break
 		default:
