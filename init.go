@@ -2,11 +2,13 @@
 package main
 
 import (
+	"bufio"
     "io/ioutil"
     "fmt"
     "os"
     "os/exec"
-    "strconv"
+    // "strconv"
+	"strings"
     "syscall"
 )
 
@@ -32,25 +34,13 @@ func mountProc() {
     }
 }
 
-func listProc() {
-    info, err := ioutil.ReadDir("/proc")
+func listDir(dir string) {
+    info, err := ioutil.ReadDir(dir)
     if err != nil {
-        errorExit("list proc", err)
+        errorExit("list " + dir, err)
     }
-    for i, file := range info {
-        name := file.Name()
-        fmt.Println(i, file.Name())
-
-        if _, err := strconv.Atoi(name); err != nil {
-            comm_name := fmt.Sprintf("/proc/%s/comm", name)
-            buf := []byte{}
-            file, err := os.Open(comm_name)
-            if err != nil {
-                continue
-            }
-            file.Read(buf)
-            fmt.Println(buf)
-        }
+    for _, file := range info {
+        fmt.Println(file.Name())
     }
 }
 
@@ -64,8 +54,8 @@ func printSelf() {
     fmt.Println("self:", string(buf))
 }
 
-func serialFile() *os.File {
-    serial, err := os.Open("/dev/ttyS0")
+func serialFile(filename string) *os.File {
+    serial, err := os.Open(filename)
     if err != nil {
         errorExit("open serial", err)
     }
@@ -77,18 +67,29 @@ func main() {
     remountRoot()
     mountProc()
 
-    serial := serialFile()
+	input := bufio.NewReader(os.Stdin)
+    for {
+		fmt.Print("$ ")
+		s, err := input.ReadString('\n')
+		if err != nil {
+			errorExit("read string", err)
+		}
 
-    sub := exec.Command("/sbin/sub")
-    sub.Stdin = serial
-    sub.Stdout = serial
-    sub.Stderr = serial
+		str := strings.TrimSpace(s)
 
-    sub.Start()
-    fmt.Println("running 2")
-    sub.Wait()
-    fmt.Println("done")
-
-    for {}
+		switch {
+		case str == "test":
+			fmt.Println("Test succesful!")
+		case str == "sub":
+			sub := exec.Command("/sbin/sub")
+			sub.Run()
+		case len(str) > 3 && str[:3] == "ls ":
+			listDir(str[3:])
+		case str == "":
+			break
+		default:
+			fmt.Println("Command not found")
+		}
+	}
 }
 
