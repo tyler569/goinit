@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	// "strconv"
 	"strings"
 	"syscall"
 )
@@ -55,24 +54,6 @@ func catFile(filename string) error {
 	return nil
 }
 
-func printSelf() {
-	buf := make([]byte, 32)
-	file, err := os.Open("/proc/self/comm")
-	if err != nil {
-		errorExit("open comm", err)
-	}
-	file.Read(buf)
-	fmt.Println("self:", string(buf))
-}
-
-func serialFile(filename string) *os.File {
-	serial, err := os.Open(filename)
-	if err != nil {
-		errorExit("open serial", err)
-	}
-	return serial
-}
-
 var PATH []string = []string{
 	"/sbin",
 	"/bin",
@@ -99,6 +80,9 @@ func execFilenameAndArgs(args []string) error {
 	}
 
 	cmd := exec.Command(f.Name(), args[1:]...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
@@ -127,9 +111,15 @@ func main() {
 				fmt.Printf("%v ", arg)
 			}
 			fmt.Println()
+		case "cat":
+			for _, arg := range args[1:] {
+				catFile(arg)
+			}
 		default:
 			err := execFilenameAndArgs(args)
-			fmt.Println("exec:", err)
+			if err != nil {
+				fmt.Println("exec:", err)
+			}
 		}
 	}
 }
