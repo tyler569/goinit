@@ -2,11 +2,14 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
 	"syscall"
 )
+
+var mount = flag.Bool("mount", true, "Mount filesystems")
 
 func errorExit(context string, err error) {
 	fmt.Println(context, ":", err)
@@ -37,8 +40,11 @@ func unknown(cmd string) {
 
 func main() {
 	fmt.Println("Hello World")
-	remountRoot()
-	mountProc()
+	flag.Parse()
+	if *mount {
+		remountRoot()
+		mountProc()
+	}
 
 	input := bufio.NewReader(os.Stdin)
 	for {
