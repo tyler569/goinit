@@ -3,9 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 	"syscall"
 )
@@ -33,57 +31,8 @@ func mountProc() {
 	}
 }
 
-func listDir(dir string) error {
-	info, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return err
-	}
-	for _, file := range info {
-		fmt.Println(file.Name())
-	}
-	return nil
-}
-
-func catFile(filename string) error {
-	bytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return err
-	}
-
-	fmt.Print(string(bytes))
-	return nil
-}
-
-var PATH []string = []string{
-	"/sbin",
-	"/bin",
-}
-
-func findFileInPath(filename string) (*os.File, error) {
-	var f *os.File
-	var err error
-	for _, dir := range PATH {
-		f, err = os.Open(dir + "/" + filename)
-		if err == nil {
-			break
-		}
-	}
-
-	return f, err
-}
-
-func execFilenameAndArgs(args []string) error {
-	f, err := findFileInPath(args[0])
-
-	if err != nil {
-		return err
-	}
-
-	cmd := exec.Command(f.Name(), args[1:]...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+func unknown(cmd string) {
+	fmt.Fprintln(os.Stderr, "Unknown command:", cmd)
 }
 
 func main() {
@@ -102,24 +51,26 @@ func main() {
 
 		args := strings.Split(s, " ")
 		command := args[0]
+		args = args[1:]
 
 		switch command {
 		case "":
 			continue
 		case "echo":
-			for _, arg := range args[1:] {
+			for _, arg := range args {
 				fmt.Printf("%v ", arg)
 			}
 			fmt.Println()
 		case "cat":
-			for _, arg := range args[1:] {
-				catFile(arg)
+			for _, arg := range args {
+				cat(arg)
+			}
+		case "ls":
+			for _, arg := range args {
+				ls(arg)
 			}
 		default:
-			err := execFilenameAndArgs(args)
-			if err != nil {
-				fmt.Println("exec:", err)
-			}
+			unknown(command)
 		}
 	}
 }
