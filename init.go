@@ -78,6 +78,8 @@ func main() {
 			for _, arg := range args {
 				ls(arg)
 			}
+		case "cd":
+			cd(args[0])
 		default:
 			unknown(command)
 		}
