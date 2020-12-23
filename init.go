@@ -72,6 +72,9 @@ func main() {
 				cat(arg)
 			}
 		case "ls":
+			if len(args) == 0 {
+				ls(".")
+			}
 			for _, arg := range args {
 				ls(arg)
 			}
