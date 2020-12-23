@@ -38,6 +38,13 @@ func unknown(cmd string) {
 	fmt.Fprintln(os.Stderr, "Unknown command:", cmd)
 }
 
+var legacyCommands = map[string]func([]string)error {
+	"echo": echo,
+	"ls": ls,
+	"cd": cd,
+	"cat": cat,
+}
+
 func main() {
 	fmt.Println("Hello World")
 	flag.Parse()
@@ -59,28 +66,16 @@ func main() {
 		command := args[0]
 		args = args[1:]
 
-		switch command {
-		case "":
+		if command == "" {
 			continue
-		case "echo":
-			for _, arg := range args {
-				fmt.Printf("%v ", arg)
+		}
+
+		if fn, ok := legacyCommands[command]; ok {
+			err := fn(args)
+			if err != nil {
+				fmt.Printf("%v: %v\n", command, err)
 			}
-			fmt.Println()
-		case "cat":
-			for _, arg := range args {
-				cat(arg)
-			}
-		case "ls":
-			if len(args) == 0 {
-				ls(".")
-			}
-			for _, arg := range args {
-				ls(arg)
-			}
-		case "cd":
-			cd(args[0])
-		default:
+		} else {
 			unknown(command)
 		}
 	}

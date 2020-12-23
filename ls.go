@@ -5,13 +5,18 @@ import (
 	"io/ioutil"
 )
 
-func ls(dir string) error {
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return err
+func ls(dirs []string) error {
+	if len(dirs) == 0 {
+		dirs = []string{"."}
 	}
-	for _, f := range files {
-		fmt.Println(f.Name())
+	for _, dir := range dirs {
+		files, err := ioutil.ReadDir(dir)
+		if err != nil {
+			return err
+		}
+		for _, f := range files {
+			fmt.Println(f.Name())
+		}
 	}
 	return nil
 }
